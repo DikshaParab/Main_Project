@@ -1,0 +1,134 @@
+/* login.css */
+body {
+    background: #f8fafb;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.login-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.login-header {
+    margin-bottom: 2rem;
+}
+
+.login-header i {
+    font-size: 2.5rem;
+    color: #2db36c;
+    margin-bottom: 1rem;
+}
+
+.login-header h2 {
+    color: #2db36c;
+    font-weight: 600;
+    margin: 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #2db36c;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: none;
+    border-bottom: 2px solid #2db36c;
+    background: transparent;
+    font-size: 1rem;
+    color: #222;
+    outline: none;
+}
+
+.password-input {
+    position: relative;
+}
+
+.password-input .toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #2db36c;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #2db36c;
+    color: #fff;
+    border: none;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background: #1a8c4a;
+}
+
+.btn-secondary {
+    background: #fff;
+    color: #2db36c;
+    border: 2px solid #2db36c;
+}
+
+.btn-secondary:hover {
+    background: #2db36c;
+    color: #fff;
+}
+
+.punch-actions {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.punch-actions .btn {
+    flex: 1;
+}
+
+.login-footer {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.login-footer a {
+    color: #2db36c;
+    text-decoration: none;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}

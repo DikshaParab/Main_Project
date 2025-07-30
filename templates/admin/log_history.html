@@ -1,0 +1,39 @@
+<!-- log_history.html -->
+{% extends "/admin/base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h2>Leave Log History</h2>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Leave Period</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Action Date</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for leave in all_leaves %}
+          {% if leave.status != 'pending' %}
+          <tr>
+            <td>{{ leave.employee.name|capitalize if leave.employee else 'N/A' }}</td>
+            <td>{{ leave.start_date.strftime('%d %b %Y') }} - {{ leave.end_date.strftime('%d %b %Y') }}</td>
+            <td>{{ leave.reason }}</td>
+            <td><span class="badge bg-{{ 'success' if leave.status == 'approved' else 'danger' }}">{{ leave.status.capitalize() }}</span></td>
+            <td>{{ leave.updated_at.strftime('%d %b %Y %H:%M') if leave.updated_at else '-' }}</td>
+          </tr>
+          {% endif %}
+        {% else %}
+          <tr><td colspan="5" class="text-center">No leave actions yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

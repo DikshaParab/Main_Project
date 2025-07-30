@@ -1,0 +1,30 @@
+{% extends "/employee/base.html" %}
+{% block title %}Add Employee{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Add New Employee</h2>
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <form action="/employee/add" method="POST">
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required minlength="8">
+        </div>
+        <div class="form-group">
+            <label for="repassword">Confirm Password</label>
+            <input type="password" id="repassword" name="repassword" required minlength="8">
+        </div>
+        <button type="submit" class="btn btn-primary">Add</button>
+    </form>
+</div>
+{% endblock %}
