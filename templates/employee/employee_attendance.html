@@ -1,0 +1,99 @@
+{% extends "employee/base.html" %}
+
+{% block content %}
+<div class="dashboard-content">
+    <h1>My Attendance</h1>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Monthly Summary</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h6>Present Days</h6>
+                        <p class="stat-value">{{ present_days }}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h6>Absent Days</h6>
+                        <p class="stat-value">{{ absent_days }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Attendance Records</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                        <tr>
+                            <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ record.check_in.strftime('%H:%M:%S') if record.check_in else '-' }}</td>
+                            <td>{{ record.check_out.strftime('%H:%M:%S') if record.check_out else '-' }}</td>
+                            <td>
+                                <span class="badge bg-{% if record.check_in and record.check_out %}success{% elif record.check_in %}warning{% else %}danger{% endif %}">
+                                    {% if record.check_in and record.check_out %}Present
+                                    {% elif record.check_in %}Half Day
+                                    {% else %}Absent
+                                    {% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .stat-card h6 {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #4e73df;
+        margin: 0;
+    }
+    
+    .badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .bg-success { background-color: #1cc88a; }
+    .bg-warning { background-color: #f6c23e; }
+    .bg-danger { background-color: #e74a3b; }
+</style>
+{% endblock %}

@@ -1,84 +1,61 @@
-<!-- dashboard.html -->
-{% extends "/admin/base.html" %}
-{% block title %}Admin Dashboard | EMS{% endblock %}
+<!-- templates/admin/dashboard.html -->
+{% extends "admin/base.html" %}
+
 {% block content %}
-<div class="card-grid stat-row">
-  <div class="card stat-card">
-    <h3>Total Employees</h3>
-    <div class="stat-value">{{ total_employees }}</div>
-    <div class="stat-change">+5 this month</div>
-  </div>
-  <div class="card stat-card">
-    <h3>Present Today</h3>
-    <div class="stat-value">{{ present_today }}</div>
-    <div class="stat-change">
-      {% if total_employees > 0 %}
-        {{ (present_today / total_employees * 100) | round(0) }}% attendance
-      {% else %}
-        N/A
-      {% endif %}
+<div class="container-fluid">
+    <h1 class="mb-4">Admin Dashboard</h1>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Employees</h5>
+                    <p class="card-text display-4">{{ employee_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Present Today</h5>
+                    <p class="card-text display-4">{{ present_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Leaves</h5>
+                    <p class="card-text display-4">{{ pending_leaves }}</p>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="card stat-card">
-    <h3>Pending Leaves</h3>
-    <div class="stat-value">{{ pending_leaves }}</div>
-    <div class="stat-change">Check requests</div>
-  </div>
-  <div class="card stat-card">
-    <h3>System Uptime</h3>
-    <div class="stat-value">99.9%</div>
-    <div class="stat-change">Stable</div>
-  </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Recent Activities</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Activity</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in recent_activities %}
+                    <tr>
+                        <td>{{ activity.employee_name }}</td>
+                        <td>{{ activity.description }}</td>
+                        <td>{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-
-<div class="card mt-4">
-  <h2>Attendance Trend</h2>
-  <canvas id="attendanceLineChart" height="300"></canvas>
-</div>
-
-
-
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var ctx = document.getElementById('attendanceLineChart').getContext('2d');
-    var attendanceLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    var attendanceData = [90, 92, 95, 93, 98, 97, 99];
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: attendanceLabels,
-        datasets: [{
-          label: 'Employees Present',
-          data: attendanceData,
-          borderColor: '#198754',
-          backgroundColor: 'rgba(25,135,84,0.1)',
-          tension: 0.3,
-          fill: true,
-          pointRadius: 4,
-          pointBackgroundColor: '#198754',
-          pointBorderColor: '#fff',
-          pointHoverRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: true, position: 'top' },
-          title: { display: false }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: 'Employees Present' }
-          },
-          x: {
-            title: { display: true, text: 'Day of Week' }
-          }
-        }
-      }
-    });
-  });
-</script>
 {% endblock %}

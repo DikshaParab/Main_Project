@@ -1,3 +1,4 @@
+<!-- templates/employee/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +18,7 @@
         <button class="menu-toggle" id="menuToggle">
             <i class="fas fa-bars"></i>
         </button>
-        <div class="ms-auto">
+        <div class="me-auto">
             <button class="btn logout-btn">
                 <a href="/logout">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -32,47 +33,47 @@
             <div class="sidebar-header">
                 <div class="user-profile">
                     <div class="avatar">
-                        {% if employee.avatar %}
-                        <img src="{{ employee.avatar }}" alt="User Avatar">
+                        {% if user.avatar %}
+                        <img src="{{ user.avatar }}" alt="User Avatar">
                         {% else %}
                         <i class="fas fa-user-circle"></i>
                         {% endif %}
                     </div>
                     <div class="user-info">
-                        <h3>{{ employee.name }}</h3>
-                        <p>{{ employee.email }}</p>
+                        <h3>{{ user.name }}</h3>
+                        <p>{{ user.email }}</p>
                     </div>
                 </div>
             </div>
             
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="/employee/dashboard?employee_id={{ employee.id }}" class="nav-link">
+                    <a href="/employee/dashboard/{{ user.id }}" class="nav-link">
                         <i class="fas fa-tachometer-alt"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/employee/attendance?employee_id={{ employee.id }}" class="nav-link">
+                    <a href="/employee/attendance/{{ user.id }}" class="nav-link">
                         <i class="fas fa-calendar-check"></i>
                         <span>Attendance</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/employee/leaves?employee_id={{ employee.id }}" class="nav-link">
+                    <a href="/employee/leave/{{ user.id }}" class="nav-link">
                         <i class="fas fa-calendar-minus"></i>
                         <span>Leave Requests</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/employee/profile?employee_id={{ employee.id }}" class="nav-link">
+                    <a href="/employee/profile/{{ user.id }}" class="nav-link">
                         <i class="fas fa-user"></i>
                         <span>Profile</span>
                     </a>
                 </li>
-                {% if employee.role %}
+                {% if user.role %}
                 <li class="nav-item">
-                    <a href="/employee/add?employee_id={{ employee.id }}" class="nav-link">
+                    <a href="/admin/add-employee" class="nav-link">
                         <i class="fas fa-user-plus"></i>
                         <span>Add Employee</span>
                     </a>
@@ -98,7 +99,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
             document.querySelectorAll('.nav-link').forEach(link => {
-                if (link.getAttribute('href').includes(currentPath.split('/')[2])) {
+                if (link.getAttribute('href').startsWith(currentPath)) {
                     link.classList.add('active');
                 }
             });

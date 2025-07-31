@@ -1,43 +1,115 @@
-{% extends "/employee/base.html" %}
-{% block title %}Leave History{% endblock %}
-{% block content %}
-<header class="header">
-    <div class="page-title">
-        <h1>Leave History</h1>
-    </div>
-    <div class="header-actions">
-        <a href="/employee/apply-leave?employee_id={{ employee.id }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Apply Leave
-        </a>
-    </div>
-</header>
+{% extends "employee/base.html" %}
 
-<div class="card">
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>Leave Period</th>
-                    <th>Days</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for leave in leaves %}
-                <tr>
-                    <td>{{ leave.start_date.strftime('%Y-%m-%d') }} to {{ leave.end_date.strftime('%Y-%m-%d') }}</td>
-                    <td>{{ (leave.end_date - leave.start_date).days + 1 }}</td>
-                    <td>{{ leave.reason }}</td>
-                    <td>
-                        <span class="status-badge status-{{ leave.status }}">
-                            {{ leave.status|title }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+{% block content %}
+<div class="dashboard-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Leave Applications</h1><br>
+        <button class="btn btn-primary" id="applyLeaveBtn">
+            <i class="fas fa-plus me-2"></i>Apply Leave
+        </button>
+    </div><br>
+
+    {% if success %}
+    <div class="alert alert-success">Leave applied successfully!</div>
+    {% endif %}
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Leave Period</th>
+                            <th>Days</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Applied On</th>
+                            {% if user.role %}<th>Actions</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leaves %}
+                        <tr>
+                            <td>{{ leave.from_date }} to {{ leave.to_date }}</td>
+                            <td>{{ (leave.to_date - leave.from_date).days + 1 }}</td>
+                            <td>{{ leave.reason }}</td>
+                            <td>
+                                <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                    {{ leave.status }}
+                                </span>
+                            </td>
+                            <td>{{ leave.created_at.strftime('%Y-%m-%d') }}</td>
+                            {% if user.role %}
+                            <td>
+                                {% if leave.status == 'pending' %}
+                                <form method="POST" action="/admin/leave/decision/{{ leave.id }}" style="display:inline">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <form method="POST" action="/admin/leave/decision/{{ leave.id }}" style="display:inline">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Leave Application Modal -->
+<div class="modal fade" id="leaveModal" tabindex="-1" aria-labelledby="leaveModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="/employee/leave/{{ user.id }}/{{ leaves.id }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="leaveModalLabel">Apply for Leave</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+          {% endif %}
+          <div class="mb-3">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" name="start_date" class="form-control" required min="{{ current_date }}">
+          </div>
+          <div class="mb-3">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" name="end_date" class="form-control" required min="{{ current_date }}">
+          </div>
+          <div class="mb-3">
+            <label for="reason" class="form-label">Reason</label>
+            <textarea name="reason" class="form-control" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Submit</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelectorAll("input[type='date']").forEach(input => {
+      input.setAttribute('min', today);
+    });
+  });
+  document.getElementById('applyLeaveBtn').addEventListener('click', function () {
+    const leaveModal = new bootstrap.Modal(document.getElementById('leaveModal'));
+    leaveModal.show();
+  });
+</script>
+{% endblock %}
 {% endblock %}

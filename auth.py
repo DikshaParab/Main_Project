@@ -1,9 +1,8 @@
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import bcrypt
-from models import Employee, Login
-from schemas import EmployeeCreate, EmployeeLogin
-from datetime import datetime
+from database import get_db
+import models
 
 def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
@@ -11,45 +10,22 @@ def get_password_hash(password: str) -> str:
     return hashed.decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    if not hashed_password:
-        return False
-    try:
-        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
-    except (ValueError, TypeError):
-        return False
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
-def register_user(db: Session, employee: EmployeeCreate):
-    # Add password match validation
-    if employee.password != employee.repassword:
-        raise HTTPException(status_code=400, detail="Passwords do not match")
-    
-    existing_employee = db.query(Employee).filter(Employee.email == employee.email).first()
-    if existing_employee:
-        raise HTTPException(status_code=400, detail="Email already registered")
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
 
-    new_employee = Employee(
-        name=employee.name,
-        email=employee.email,
-        password=get_password_hash(employee.password),
-        role=employee.role
-    )
-    db.add(new_employee)
-    db.commit()
-    db.refresh(new_employee)
-    return new_employee
+def get_current_user(db: Session, user_id: int):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
-def login_user(db: Session, employee: EmployeeLogin):
-    db_employee = db.query(Employee).filter(Employee.email == employee.email).first()
-    if not db_employee or not verify_password(employee.password, db_employee.password):
-        raise HTTPException(status_code=400, detail="Invalid email or password")
-
-    # Optional: Track login
-    login_entry = Login(
-        employee_id=db_employee.id,
-        login_status=True,
-        login_timestamp=datetime.now()
-    )
-    db.add(login_entry)
-    db.commit()
-
-    return db_employee
+def authenticate_user(db: Session, email: str, password: str):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        return None
+    from auth import verify_password
+    if not verify_password(password, user.password_hash):
+        return None
+    return user

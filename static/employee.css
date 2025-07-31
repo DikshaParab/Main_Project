@@ -261,6 +261,10 @@ body {
     text-align: center;
 }
 
+.navbar .me-auto {
+    margin-left: auto !important;
+}
+
 /* Main Content */
 .main-content {
     flex: 1;
@@ -444,7 +448,7 @@ tr:hover {
     align-items: center;
     gap: 0.5rem;
     box-shadow: none;
-    transition: background 0.2s, color 0.2s;
+    justify-content: space-between;
 }
 .logout-btn i, .logout-btn svg {
     color: #2563eb !important;

@@ -1,101 +1,57 @@
-from sqlalchemy import Column, Integer, String, DateTime, Date, Boolean, ForeignKey, func
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
-from datetime import datetime
-from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+class User(Base):
+    __tablename__ = "users"
 
-class Employee(Base):
-    __tablename__ = "employees"
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    name = Column(String(100), nullable=False)
-    email = Column(String(200), unique=True, nullable=False)
-    password = Column(String(200), nullable=False)
-    role = Column(Boolean, nullable=False, default=False)  # False(0)=employee, True(1)=admin
-
+    id = Column(Integer, primary_key=True, index=True)
+    admin_id = Column(Integer, unique=True, nullable=True)
+    employee_id = Column(Integer, unique=True, nullable=True)
+    name = Column(String(100))
+    email = Column(String(100), unique=True, index=True)
+    password_hash = Column(String(255))
+    role = Column(Boolean, default=False)  # False for employee, True for admin
+    
     # Relationships
-    attendance = relationship("Attendance", back_populates="employee", 
-                            foreign_keys="Attendance.employee_id", 
-                            cascade="all, delete-orphan")
-    
-    leaves = relationship("LeaveRequest", back_populates="employee", 
-                         foreign_keys="LeaveRequest.employee_id", 
-                         cascade="all, delete-orphan")
-
-    def set_password(self, password: str):
-        self.password = pwd_context.hash(password)
-    
-    def verify_password(self, password: str) -> bool:
-        return pwd_context.verify(password, self.password)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "email": self.email,
-            "role": "admin" if self.role else "employee"  # Convert to string representation
-        }
-
-class Login(Base):
-    __tablename__ = "login"
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
-    login_timestamp = Column(DateTime, nullable=False, default=func.now())
-    login_status = Column(Boolean, nullable=False)
-    employee = relationship("Employee", foreign_keys=[employee_id])
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "employee_id": self.employee_id,
-            "login_timestamp": self.login_timestamp,
-            "login_status": self.login_status
-        }
+    attendance = relationship("Attendance", back_populates="user")
+    leaves_requested = relationship(
+        "Leave", 
+        back_populates="user",
+        foreign_keys="Leave.user_id"
+    )
+    leaves_processed = relationship(
+        "Leave", 
+        back_populates="processed_by_user",
+        foreign_keys="Leave.processed_by"
+    )
 
 class Attendance(Base):
     __tablename__ = "attendance"
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
-    date = Column(Date, default=datetime.now)
-    in_time = Column(DateTime)
-    out_time = Column(DateTime)
 
-    employee = relationship("Employee", back_populates="attendance", 
-                          foreign_keys=[employee_id])
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    date = Column(Date)
+    check_in = Column(DateTime, nullable=True)
+    check_out = Column(DateTime, nullable=True)
+    
+    # Relationship
+    user = relationship("User", back_populates="attendance")
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "employee_id": self.employee_id,
-            "date": self.date,
-            "in_time": self.in_time,
-            "out_time": self.out_time
-        }
+class Leave(Base):
+    __tablename__ = "leaves"
 
-class LeaveRequest(Base):
-    __tablename__ = "leave_requests"
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    reason = Column(String(255), nullable=False)
-    status = Column(String(20), default="pending")  # 'pending', 'approved', 'rejected'
-    approved_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-
-    employee = relationship("Employee", back_populates="leaves", 
-                          foreign_keys=[employee_id])
-    approver = relationship("Employee", foreign_keys=[approved_by])
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "employee_id": self.employee_id,
-            "start_date": self.start_date,
-            "end_date": self.end_date,
-            "reason": self.reason,
-            "status": self.status,
-            "approved_by": self.approved_by,
-            "updated_at": self.updated_at
-        }
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    from_date = Column(Date)
+    to_date = Column(Date)
+    reason = Column(String(255))
+    status = Column(String(20), default="pending")  # pending, approved, rejected
+    created_at = Column(DateTime, default=datetime.now)
+    processed_by = Column(Integer, ForeignKey('users.id'), nullable=True)
+    processed_at = Column(DateTime, nullable=True)
+    
+    # Relationships
+    user = relationship("User", back_populates="leaves_requested", foreign_keys=[user_id])
+    processed_by_user = relationship("User", back_populates="leaves_processed", foreign_keys=[processed_by])
