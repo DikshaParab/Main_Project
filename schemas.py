@@ -18,7 +18,7 @@ class User(UserBase):
 
     class Config:
         orm_mode = True
-        from_attributes = True  # For Pydantic v2 compatibility
+        from_attributes = True 
 
 # Attendance Schemas
 class AttendanceBase(BaseModel):

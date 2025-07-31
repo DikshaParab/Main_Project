@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -47,6 +48,7 @@ async def home(request: Request, user_id: int = None, db: Session = Depends(get_
 async def login_page(request: Request):
     return templates.TemplateResponse("authentication/login.html", {"request": request})
 
+
 @app.post("/login", response_class=HTMLResponse)
 async def login(
     request: Request,
@@ -55,7 +57,6 @@ async def login(
     action: str = Form(None),
     db: Session = Depends(get_db)
 ):
-    # Check if email exists first
     db_user = db.query(models.User).filter(models.User.email == email).first()
     if not db_user:
         return templates.TemplateResponse("authentication/login.html", {
@@ -63,7 +64,8 @@ async def login(
             "error": "Email not registered. Please register first."
         })
 
-    # Then verify password
+    await asyncio.sleep(0.5)
+    
     user = auth.authenticate_user(db, email, password)
     if not user:
         return templates.TemplateResponse("authentication/login.html", {
@@ -71,14 +73,11 @@ async def login(
             "error": "Invalid password. Please try again."
         })
 
-    # Debug log user role
-    print(f"User {user.email} role: {user.role}")
     
     if user.role:  # Admin
         return RedirectResponse(url=f"/admin/dashboard/{user.id}", status_code=303)
     else:  # Employee
         if action == "punchin":
-            # Perform punch-in
             today = date.today()
             existing = db.query(models.Attendance).filter(
                 models.Attendance.user_id == user.id,
@@ -86,7 +85,6 @@ async def login(
             ).first()
             punch_time = datetime.now()
             if existing and existing.check_in:
-                # Already punched in
                 pass
             elif existing:
                 existing.check_in = punch_time
@@ -100,7 +98,6 @@ async def login(
             db.commit()
             return RedirectResponse(url=f"/employee/dashboard/{user.id}?punchin=success", status_code=303)
         elif action == "punchout":
-            # Perform punch-out
             today = date.today()
             attendance = db.query(models.Attendance).filter(
                 models.Attendance.user_id == user.id,
@@ -134,7 +131,6 @@ async def register(
     # Check if any admin user exists
     admin_exists = db.query(models.User).filter(models.User.role == True).first()
     if admin_exists:
-        # Admin exists, disallow registration
         return templates.TemplateResponse("authentication/register.html", 
             {"request": request, "error": "Registration is closed. Please contact admin."})
     
@@ -166,14 +162,13 @@ async def admin_dashboard(
     try:
         user = auth.get_current_user(db, user_id)
        
-        # Get dashboard data
         employee_count = db.query(models.User).filter(models.User.employee_id.isnot(None)).count()
         present_count = db.query(models.Attendance).filter(
             models.Attendance.date == date.today(),
             models.Attendance.check_in.isnot(None)
         ).count()
         pending_leaves = db.query(models.Leave).filter(models.Leave.status == "pending").count()
-        recent_activities = []  # Placeholder for recent activities logic
+        recent_activities = []  
         
         return templates.TemplateResponse("admin/dashboard.html", {
             "request": request,
@@ -278,7 +273,6 @@ async def admin_leave_requests(
     db: Session = Depends(get_db)
 ):
     try:
-        # Get current user (modified to avoid the response model issue)
         current_user = db.query(models.User).filter(models.User.id == user_id).first()
         if not current_user or not current_user.role:
             raise HTTPException(status_code=403, detail="Admin access required")
@@ -312,11 +306,10 @@ async def admin_leave_requests(
 async def process_leave_decision(
     leave_id: int,
     decision: str = Form(...),
-    user_id: int = Form(...),  # Admin user_id from form
+    user_id: int = Form(...),  
     db: Session = Depends(get_db)
 ):
     try:
-        # Verify admin user
         admin_user = db.query(models.User).filter(
             models.User.id == user_id,
             models.User.role == True  # Ensure it's an admin
@@ -359,12 +352,12 @@ async def employee_dashboard(request: Request, user_id: int, punchin: str = Quer
     if user.role:
         return RedirectResponse(url=f"/admin/dashboard/{user.id}", status_code=303)
     
+    print(user.role, 'userasdasdasdasdasd')
     today = date.today()
     attendance = db.query(models.Attendance).filter(
         models.Attendance.user_id == user.id,
         models.Attendance.date == today
     ).first()
-
     punchin_success = None
     punchout_success = None
     if punchin == "success":
@@ -383,7 +376,7 @@ async def employee_punch_in(
 ):
     user = auth.get_current_user(db, user_id)
     today = date.today()
-    
+    print(today, 'today')
     existing = db.query(models.Attendance).filter(
         models.Attendance.user_id == user.id,
         models.Attendance.date == today
@@ -475,7 +468,6 @@ async def apply_leave(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Validate dates
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
         today = date.today()
@@ -492,7 +484,6 @@ async def apply_leave(
                 status_code=303
             )
         
-        # Check for overlapping leaves
         overlapping = db.query(models.Leave).filter(
             models.Leave.user_id == user_id,
             models.Leave.status.in_(["pending", "approved"]),
@@ -534,12 +525,10 @@ async def employee_attendance(
     db: Session = Depends(get_db)
 ):
     try:
-        # Verify employee access
         current_user = db.query(models.User).filter(models.User.id == user_id).first()
         if not current_user:
             raise HTTPException(status_code=404, detail="Employee not found")
         
-        # Get attendance records for this employee
         attendance_records = db.query(models.Attendance)\
             .filter(models.Attendance.user_id == user_id)\
             .order_by(models.Attendance.date.desc())\
@@ -547,7 +536,7 @@ async def employee_attendance(
         
         # Calculate stats
         present_days = len([r for r in attendance_records if r.check_in])
-        absent_days = 30 - present_days  # Assuming 30-day month
+        absent_days = 30 - present_days  
         
         return templates.TemplateResponse(
             "employee/employee_attendance.html",

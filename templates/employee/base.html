@@ -1,4 +1,3 @@
-<!-- templates/employee/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,17 +9,13 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- Fixed Top Navbar -->
     <nav class="navbar">
         <div class="navbar-brand">
             <div class="brand-logo">EMS</div>
         </div>
-        <button class="menu-toggle" id="menuToggle">
-            <i class="fas fa-bars"></i>
-        </button>
-        <div class="me-auto">
+        <div >
             <button class="btn logout-btn">
-                <a href="/logout">
+                <a href="/logout?user_id={{ user.id }}">Logout</a>
                     <i class="fas fa-sign-out-alt me-2"></i>Logout
                 </a>
             </button>
@@ -28,7 +23,6 @@
     </nav>
 
     <div class="dashboard-container">
-        <!-- Fixed Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="user-profile">
@@ -82,7 +76,6 @@
             </ul>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
             {% block content %}{% endblock %}
         </main>
@@ -90,12 +83,8 @@
     
     {% block extra_scripts %}{% endblock %}
     <script>
-        // Mobile menu toggle
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            document.getElementById('sidebar').classList.toggle('active');
-        });
+        
 
-        // Set active menu item based on current URL
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
             document.querySelectorAll('.nav-link').forEach(link => {

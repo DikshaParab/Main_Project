@@ -4,7 +4,7 @@
 <div class="dashboard-content">
     
     <h1>Welcome, {{ user.name }}</h1>
-    
+
     <!-- Attendance Status Card -->
     <div class="attendance-card">
         <h2>Today's Attendance</h2>
@@ -67,11 +67,10 @@
             <div class="modal-body">
                 <p id="modal-message">Are you sure you want to punch in?</p>
                 <p id="punch-timer" style="font-weight: bold; margin-top: 10px; display: none;">Time elapsed: <span id="timer-value">00:00:00</span></p>
-            <!-- Location info removed as per request -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="punchForm" method="post" action="">
+                <form id="punchForm" method="post" action="/employee/punch-in/{{ user.id }}" enctype="multipart/form-data">
                     <button type="submit" class="btn btn-primary">Confirm</button>
                 </form>
             </div>

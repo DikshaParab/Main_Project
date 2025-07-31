@@ -1,4 +1,3 @@
-<!-- templates/admin/dashboard.html -->
 {% extends "admin/base.html" %}
 
 {% block content %}
@@ -34,23 +33,31 @@
 
     <div class="card mt-4">
         <div class="card-header">
-            <h5>Recent Activities</h5>
+            <h5>Today's Working Hours</h5>
         </div>
         <div class="card-body">
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Employee</th>
-                        <th>Activity</th>
-                        <th>Time</th>
+                        <th>Hours Worked</th>
+                        <th>Last Activity</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for activity in recent_activities %}
                     <tr>
                         <td>{{ activity.employee_name }}</td>
-                        <td>{{ activity.description }}</td>
-                        <td>{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if activity.check_in and activity.check_out %}
+                                {{ ((activity.check_out - activity.check_in).total_seconds() / 3600)|round(2) }} hours
+                            {% elif activity.check_in %}
+                                Currently working (since {{ activity.check_in.strftime('%H:%M') }})
+                            {% else %}
+                                Not checked in
+                            {% endif %}
+                        </td>
+                        <td>{{ activity.last_activity.strftime('%Y-%m-%d %H:%M') if activity.last_activity else 'N/A' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

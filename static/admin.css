@@ -83,7 +83,7 @@
     align-items: center;
     gap: 0.5rem;
     box-shadow: none;
-    justify-content: space-between;
+    justify-content: space-between !important;
 }
 .logout-btn i, .logout-btn svg {
     color: #2563eb !important;
