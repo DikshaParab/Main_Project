@@ -33,13 +33,16 @@
 
     <div class="card mt-4">
         <div class="card-header">
-            <h5>Today's Working Hours</h5>
+            <h5>Today's Attendance</h5>
         </div>
         <div class="card-body">
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Employee</th>
+                        <th>Status</th>
+                        <th>Punch-In</th>
+                        <th>Punch-Out</th>
                         <th>Hours Worked</th>
                         <th>Last Activity</th>
                     </tr>
@@ -49,15 +52,40 @@
                     <tr>
                         <td>{{ activity.employee_name }}</td>
                         <td>
-                            {% if activity.check_in and activity.check_out %}
-                                {{ ((activity.check_out - activity.check_in).total_seconds() / 3600)|round(2) }} hours
-                            {% elif activity.check_in %}
-                                Currently working (since {{ activity.check_in.strftime('%H:%M') }})
+                            {% if activity.check_in and not activity.check_out %}
+                                <span class="badge badge-success">Working</span>
+                            {% elif activity.check_in and activity.check_out %}
+                                <span class="badge badge-info">Completed</span>
                             {% else %}
-                                Not checked in
+                                <span class="badge badge-secondary">Absent</span>
                             {% endif %}
                         </td>
-                        <td>{{ activity.last_activity.strftime('%Y-%m-%d %H:%M') if activity.last_activity else 'N/A' }}</td>
+                        <td>
+                            {% if activity.check_in %}
+                                {{ activity.check_in.strftime('%H:%M') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if activity.check_out %}
+                                {{ activity.check_out.strftime('%H:%M') }}
+                            {% elif activity.check_in %}
+                                <span class="text-muted">Still working</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if activity.check_in and activity.check_out %}
+                                {{ ((activity.check_out - activity.check_in).total_seconds() / 3600)|round(2) }}h
+                            {% elif activity.check_in %}
+                                {{ ((now - activity.check_in).total_seconds() / 3600)|round(2) }}h (ongoing)
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ activity.last_activity.strftime('%H:%M') if activity.last_activity else 'N/A' }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

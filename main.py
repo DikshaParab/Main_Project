@@ -168,7 +168,30 @@ async def admin_dashboard(
             models.Attendance.check_in.isnot(None)
         ).count()
         pending_leaves = db.query(models.Leave).filter(models.Leave.status == "pending").count()
-        recent_activities = []  
+        
+        # Get today's attendance with employee information
+        today = date.today()
+        recent_activities = db.query(
+            models.Attendance,
+            models.User.name
+        ).join(
+            models.User,
+            models.Attendance.user_id == models.User.id
+        ).filter(
+            models.Attendance.date == today
+        ).order_by(
+            models.Attendance.check_in.desc()
+        ).all()
+        
+        # Format the data for the template
+        activities_data = []
+        for attendance, name in recent_activities:
+            activities_data.append({
+                "employee_name": name,
+                "check_in": attendance.check_in,
+                "check_out": attendance.check_out,
+                "last_activity": attendance.check_out or attendance.check_in
+            })
         
         return templates.TemplateResponse("admin/dashboard.html", {
             "request": request,
@@ -176,11 +199,12 @@ async def admin_dashboard(
             "employee_count": employee_count,
             "present_count": present_count,
             "pending_leaves": pending_leaves,
-            "recent_activities": recent_activities
+            "recent_activities": activities_data,
+            "now": datetime.now()  # For calculating ongoing work durations
         })
     except HTTPException:
         return RedirectResponse(url="/login", status_code=303)
-
+    
 @app.get("/admin/add-employee/{user_id}", response_class=HTMLResponse)
 async def add_employee_page(request: Request, user_id: int, db: Session = Depends(get_db)):
     user = auth.get_current_user(db, user_id)
@@ -352,7 +376,6 @@ async def employee_dashboard(request: Request, user_id: int, punchin: str = Quer
     if user.role:
         return RedirectResponse(url=f"/admin/dashboard/{user.id}", status_code=303)
     
-    print(user.role, 'userasdasdasdasdasd')
     today = date.today()
     attendance = db.query(models.Attendance).filter(
         models.Attendance.user_id == user.id,
@@ -366,7 +389,7 @@ async def employee_dashboard(request: Request, user_id: int, punchin: str = Quer
         punchout_success = "Punch-out successful!"
 
     return templates.TemplateResponse("employee/employee_dashboard.html", 
-        {"request": request, "user": user, "attendance": attendance, "punchin_success": punchin_success, "punchout_success": punchout_success})
+        {"request": request, "user": user, "user_id": user_id,  "attendance": attendance, "punchin_success": punchin_success, "punchout_success": punchout_success})
 
 @app.post("/employee/punch-in/{user_id}", response_class=HTMLResponse)
 async def employee_punch_in(
@@ -535,8 +558,21 @@ async def employee_attendance(
             .all()
         
         # Calculate stats
-        present_days = len([r for r in attendance_records if r.check_in])
-        absent_days = 30 - present_days  
+        present_days = 0
+        half_days = 0
+        absent_days = 0
+        
+        for record in attendance_records:
+            if record.check_in and record.check_out:
+                hours_worked = (record.check_out - record.check_in).total_seconds() / 3600
+                if hours_worked >= 4:
+                    present_days += 1
+                else:
+                    half_days += 1
+            elif record.check_in:
+                half_days += 1
+            else:
+                absent_days += 1
         
         return templates.TemplateResponse(
             "employee/employee_attendance.html",
@@ -545,7 +581,8 @@ async def employee_attendance(
                 "user": current_user,
                 "attendance_records": attendance_records,
                 "present_days": present_days,
-                "absent_days": absent_days
+                "absent_days": absent_days,
+                "half_days": half_days
             }
         )
     except Exception as e:

@@ -10,7 +10,9 @@
                 <div class="card-body text-center">
                     <h4>{{ user.name }}</h4>
                     <p class="text-muted mb-1">{{ user.email }}</p>
-                    <p class="text-primary mb-4">Administrator</p>
+                    <p class="text-primary">
+                        {% if user.role %}Administrator{% else %}Employee{% endif %}
+                    </p>                
                 </div>
             </div>
         </div>

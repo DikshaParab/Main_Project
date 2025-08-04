@@ -22,6 +22,12 @@
                         <p class="stat-value">{{ absent_days }}</p>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h6>Half Days</h6>
+                        <p class="stat-value">{{ half_days }}</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -38,6 +44,7 @@
                             <th>Date</th>
                             <th>Check In</th>
                             <th>Check Out</th>
+                            <th>Hours Worked</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -48,12 +55,24 @@
                             <td>{{ record.check_in.strftime('%H:%M:%S') if record.check_in else '-' }}</td>
                             <td>{{ record.check_out.strftime('%H:%M:%S') if record.check_out else '-' }}</td>
                             <td>
-                                <span class="badge bg-{% if record.check_in and record.check_out %}success{% elif record.check_in %}warning{% else %}danger{% endif %}">
-                                    {% if record.check_in and record.check_out %}Present
-                                    {% elif record.check_in %}Half Day
-                                    {% else %}Absent
-                                    {% endif %}
-                                </span>
+                                {% if record.check_in and record.check_out %}
+                                    {% set hours_worked = (record.check_out - record.check_in).total_seconds() / 3600 %}
+                                    {{ "%.2f"|format(hours_worked) }} hours
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if record.check_in and record.check_out %}
+                                    {% set hours_worked = (record.check_out - record.check_in).total_seconds() / 3600 %}
+                                    <span class="badge bg-{% if hours_worked >= 4 %}success{% else %}warning{% endif %}">
+                                        {% if hours_worked >= 4 %}Full Day{% else %}Half Day{% endif %}
+                                    </span>
+                                {% elif record.check_in %}
+                                    <span class="badge bg-warning">Half Day (No Check-out)</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Absent</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

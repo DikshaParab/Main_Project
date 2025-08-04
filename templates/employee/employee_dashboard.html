@@ -16,11 +16,7 @@
                         {% if attendance.check_in %}
                             {{ attendance.check_in.strftime('%H:%M:%S') }}
                         {% else %}
-                            <button class="btn-punch" 
-                                    data-action="punch-in" 
-                                    data-user-id="{{ user.id }}"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#punchModal">
+                            <button class="btn-punch" data-action="punch-in" data-user-id="{{ user.id }}">
                                 Punch In
                             </button>
                         {% endif %}
@@ -31,11 +27,7 @@
                     <span class="status-label">Check-out:</span>
                     <span class="status-value">
                         {% if attendance.check_in and not attendance.check_out %}
-                            <button class="btn-punch" 
-                                    data-action="punch-out" 
-                                    data-user-id="{{ user.id }}"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#punchModal">
+                            <button class="btn-punch" data-action="punch-out" data-user-id="{{ user.id }}">
                                 Punch Out
                             </button>
                         {% endif %}
@@ -47,7 +39,7 @@
             {% else %}
                 <div class="no-attendance">
                     <p>You haven't punched in today</p>
-                    <button class="btn-punch" data-action="punch-in" data-bs-toggle="modal" data-bs-target="#punchModal">
+                    <button class="btn-punch" data-action="punch-in" data-user-id="{{ user.id }}">
                         Punch In Now
                     </button>
                 </div>
@@ -65,12 +57,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p id="modal-message">Are you sure you want to punch in?</p>
-                <p id="punch-timer" style="font-weight: bold; margin-top: 10px; display: none;">Time elapsed: <span id="timer-value">00:00:00</span></p>
+                <p id="modal-message">Are you sure you want to perform this action?</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="punchForm" method="post" action="/employee/punch-in/{{ user.id }}" enctype="multipart/form-data">
+                <form id="punchForm" method="post" action="" enctype="multipart/form-data">
                     <button type="submit" class="btn btn-primary">Confirm</button>
                 </form>
             </div>
@@ -81,51 +72,41 @@
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Update modal based on punch action
-    document.getElementById('punchModal').addEventListener('show.bs.modal', function (event) {
-    const button = event.relatedTarget;
-    const action = button.getAttribute('data-action');
-    const userId = button.getAttribute('data-user-id');
-    const modal = this;
-    
-    const form = modal.querySelector('#punchForm');
-    
-    if (action === 'punch-in') {
-        modal.querySelector('#punchModalLabel').textContent = 'Confirm Punch In';
-        modal.querySelector('#modal-message').textContent = 'Are you sure you want to punch in?';
-        form.action = '/employee/punch-in/' + userId;
-    } else {
-        modal.querySelector('#punchModalLabel').textContent = 'Confirm Punch Out';
-        modal.querySelector('#modal-message').textContent = 'Are you sure you want to punch out?';
-        form.action = '/employee/punch-out/' + userId;
-    }
-});
-
-    // Update modal based on punch action
-    document.getElementById('punchModal').addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const action = button.getAttribute('data-action');
-        const userId = button.getAttribute('data-user-id');
-        const modal = this;
-
-        const form = modal.querySelector('#punchForm');
-
-        if (action === 'punch-in') {
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle punch-in button click
+    document.querySelectorAll('[data-action="punch-in"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const userId = this.getAttribute('data-user-id');
+            const modal = document.getElementById('punchModal');
+            
+            // Update modal content for punch-in
             modal.querySelector('#punchModalLabel').textContent = 'Confirm Punch In';
             modal.querySelector('#modal-message').textContent = 'Are you sure you want to punch in?';
-            form.action = '/employee/punch-in/' + userId;
-            startTimer();
-        } else {
-            modal.querySelector('#punchModalLabel').textContent = 'Confirm Punch Out';
-            modal.querySelector('#modal-message').textContent = 'Are you sure you want to punch out?';
-            form.action = '/employee/punch-out/' + userId;
-            stopTimer();
-        }
+            modal.querySelector('#punchForm').action = `/employee/punch-in/${userId}`;
+            
+            // Show modal
+            new bootstrap.Modal(modal).show();
+        });
     });
 
-    document.getElementById('punchModal').addEventListener('hide.bs.modal', function () {
-        stopTimer();
+    // Handle punch-out button click
+    document.querySelectorAll('[data-action="punch-out"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const userId = this.getAttribute('data-user-id');
+            const modal = document.getElementById('punchModal');
+            
+            // Update modal content for punch-out
+            modal.querySelector('#punchModalLabel').textContent = 'Confirm Punch Out';
+            modal.querySelector('#modal-message').textContent = 'Are you sure you want to punch out?';
+            modal.querySelector('#punchForm').action = `/employee/punch-out/${userId}`;
+            
+            // Show modal
+            new bootstrap.Modal(modal).show();
+        });
     });
+});
 </script>
 {% endblock %}
 
