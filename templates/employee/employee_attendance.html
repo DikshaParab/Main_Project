@@ -66,7 +66,7 @@
                                 {% if record.check_in and record.check_out %}
                                     {% set hours_worked = (record.check_out - record.check_in).total_seconds() / 3600 %}
                                     <span class="badge bg-{% if hours_worked >= 4 %}success{% else %}warning{% endif %}">
-                                        {% if hours_worked >= 4 %}Full Day{% else %}Half Day{% endif %}
+                                        {% if hours_worked >= 6 %}Full Day{% else %}Half Day{% endif %}
                                     </span>
                                 {% elif record.check_in %}
                                     <span class="badge bg-warning">Half Day (No Check-out)</span>

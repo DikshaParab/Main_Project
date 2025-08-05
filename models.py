@@ -19,6 +19,7 @@ class User(Base):
     attendance = relationship("Attendance", back_populates="user")
     leaves_requested = relationship("Leave", back_populates="user", foreign_keys="Leave.user_id")
     leaves_processed = relationship("Leave", back_populates="processed_by_user", foreign_keys="Leave.processed_by")
+    
 class Attendance(Base):
     __tablename__ = "attendance"
 

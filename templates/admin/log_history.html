@@ -6,61 +6,90 @@
     
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Filter Records</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
         </div>
         <div class="card-body">
-            <form class="row g-3">
-                <div class="col-md-4">
-                    <label for="employee" class="form-label">Employee</label>
-                    <select class="form-select" id="employee">
-                        <option selected>All Employees</option>
-                        {% for employee in employees %}
-                        <option value="{{ employee.id }}">{{ employee.name }}</option>
-                        {% endfor %}
-                    </select>
+            <form method="get" action="">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="employee_id">Employee</label>
+                            <select class="form-control" id="employee_id" name="employee_id">
+                                <option value="">All Employees</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}" 
+                                    {% if selected_employee == employee.id %}selected{% endif %}>
+                                    {{ employee.name }} ({{ employee.employee_id }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="date_from">From Date</label>
+                            <input type="date" class="form-control" id="date_from" 
+                                   name="date_from" value="{{ selected_date_from }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="date_to">To Date</label>
+                            <input type="date" class="form-control" id="date_to" 
+                                   name="date_to" value="{{ selected_date_to }}">
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label for="startDate" class="form-label">From Date</label>
-                    <input type="date" class="form-control" id="startDate">
-                </div>
-                <div class="col-md-3">
-                    <label for="endDate" class="form-label">To Date</label>
-                    <input type="date" class="form-control" id="endDate">
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary">Filter</button>
-                </div>
+                <button type="submit" class="btn btn-primary mt-3">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <a href="{{ request.url.path }}" class="btn btn-secondary mt-3">
+                    <i class="fas fa-times"></i> Clear Filters
+                </a>
             </form>
         </div>
     </div>
-    
+
     <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Attendance Records</h6>
+        </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="table-light">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <th>Employee</th>
                             <th>Date</th>
+                            <th>Employee</th>
                             <th>Check In</th>
                             <th>Check Out</th>
-                            <th>Working Hours</th>
+                            <th>Hours Worked</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for record in attendance_records %}
+                        {% set employee = employees|selectattr('id', 'equalto', record.user_id)|first %}
                         <tr>
-                            <td>{{ record.user.name }}</td>
-                            <td>{{ record.date }}</td>
+                            <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ employee.name if employee else 'N/A' }}</td>
                             <td>{{ record.check_in.strftime('%H:%M:%S') if record.check_in else '-' }}</td>
                             <td>{{ record.check_out.strftime('%H:%M:%S') if record.check_out else '-' }}</td>
                             <td>
                                 {% if record.check_in and record.check_out %}
-                                {{ (record.check_out - record.check_in) }}
+                                    {% set hours_worked = ((record.check_out - record.check_in).total_seconds() / 3600) %}
+                                    {{ hours_worked|round(2) }}h
+                                    {% if hours_worked < 6 %}
+                                        <span class="badge bg-info ms-2">Half Day</span>
+                                    {% endif %}
                                 {% else %}
-                                -
+                                    -
                                 {% endif %}
                             </td>
+                            
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No attendance records found</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -69,4 +98,16 @@
         </div>
     </div>
 </div>
+
+<style>
+    .badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .bg-success { background-color: #1cc88a; }
+    .bg-warning { background-color: #f6c23e; }
+    .bg-secondary { background-color: #6c757d; }
+</style>
 {% endblock %}

@@ -247,28 +247,53 @@ async def add_employee_post(
     return templates.TemplateResponse("admin/add_employee.html", 
         {"request": request, "user": user, "success": "New employee added successfully."})
 
-@app.get("/admin/add-employee/employee/{employee_id}", response_class=HTMLResponse)
-async def add_employee_by_employee_id(
+@app.get("/admin/log-history/{user_id}", response_class=HTMLResponse)
+async def admin_log_history(
     request: Request,
-    employee_id: int,
+    user_id: int,
+    employee_id: int = Query(None),
+    date_from: str = Query(None),
+    date_to: str = Query(None),
     db: Session = Depends(get_db)
 ):
-    employee = db.query(models.User).filter(models.User.employee_id == employee_id).first()
-    if not employee:
-        return RedirectResponse(url="/admin/employees", status_code=303)
-    return templates.TemplateResponse("admin/add_employee.html", {"request": request, "user": employee})
-
-@app.get("/admin/log-history/{user_id}", response_class=HTMLResponse)
-async def admin_log_history(request: Request, user_id: int, db: Session = Depends(get_db)):
     user = auth.get_current_user(db, user_id)
     if not user.role:
         return RedirectResponse(url="/employee/dashboard", status_code=303)
     
-    employees = db.query(models.User).filter(models.User.role == False).all()
-    attendance_records = db.query(models.Attendance).order_by(models.Attendance.date.desc()).all()
+    query = db.query(models.Attendance).order_by(models.Attendance.date.desc())
     
-    return templates.TemplateResponse("admin/log_history.html",
-        {"request": request, "user": user, "employees": employees, "attendance_records": attendance_records})
+    if employee_id:
+        query = query.filter(models.Attendance.user_id == employee_id)
+    
+    if date_from:
+        try:
+            date_from = datetime.strptime(date_from, "%Y-%m-%d").date()
+            query = query.filter(models.Attendance.date >= date_from)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            date_to = datetime.strptime(date_to, "%Y-%m-%d").date()
+            query = query.filter(models.Attendance.date <= date_to)
+        except ValueError:
+            pass
+    
+    attendance_records = query.all()
+    employees = db.query(models.User).filter(models.User.role == False).all()
+    
+    return templates.TemplateResponse(
+        "admin/log_history.html",
+        {
+            "request": request,
+            "user": user,
+            "employees": employees,
+            "attendance_records": attendance_records,
+            "selected_employee": employee_id,
+            "selected_date_from": date_from.strftime("%Y-%m-%d") if date_from else "",
+            "selected_date_to": date_to.strftime("%Y-%m-%d") if date_to else ""
+        }
+    )
 
 @app.get("/admin/profile/{user_id}", response_class=HTMLResponse)
 async def admin_profile(request: Request, user_id: int, db: Session = Depends(get_db)):
@@ -565,7 +590,7 @@ async def employee_attendance(
         for record in attendance_records:
             if record.check_in and record.check_out:
                 hours_worked = (record.check_out - record.check_in).total_seconds() / 3600
-                if hours_worked >= 4:
+                if hours_worked >= 6:
                     present_days += 1
                 else:
                     half_days += 1
